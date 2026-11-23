@@ -21,7 +21,7 @@ on:
       engine_repo:
         description: "URL repo engine"
         required: false
-        default: "https://github.com/zenvyzenshiro/NXNativeWindows.git"
+        default: "https://github.com/LNPANDY/NX2Apple.git"
       ipa_name:
         description: "Tên file IPA đầu ra"
         required: false
@@ -225,7 +225,7 @@ jobs:
 
           # 1. Smart A16 Auto-Patch (tự phát hiện engine đã có BC mềm hay cần ghép từ NXNativeWindows / patch_a16.py)
           if [ "$CHIP_PRESET" = "under_a17" ]; then
-            if [ -f "src/dm/gfx/tex/bc_soft.c" ] || [ -f "src/dm/gfx/tex/nvn_bcdec.c" ]; then
+            if [ -f "src/dm/gfx/tex/bc_soft.c" ] || [ -f "src/dm/gfx/tex/nvn_bcdec.c" ] || grep -rq "DM_PROF_TEX_BC_CPU" src/dm/gfx/ 2>/dev/null; then
               echo "[A16 SMART] Engine đã tích hợp sẵn giải mã BC mềm cho A16."
             else
               echo "[A16 SMART] Engine gốc (upstream) chưa có giải mã BC mềm -> tiến hành ghép thông minh..."
@@ -494,9 +494,7 @@ jobs:
             (cd "$ROOT/src" && python3 dm/gfx/tools/dmsh_chain.py --update-lock) || true
           fi
 
-          cat > "$ROOT/miao_env.txt" <<EOF
-          DM_ALIAS_SIZE=0x180000000
-          EOF
+          : > "$ROOT/miao_env.txt"
           if [ "$ENABLE_60FPS" = "true" ]; then
             cat >> "$ROOT/miao_env.txt" <<EOF
           DM_PRESENT_INTERVAL=display
@@ -512,7 +510,7 @@ jobs:
           HELP_OUT="$(cd "$ROOT/src" && python3 scripts/build_ipa_from_nsp.py --help 2>&1 || true)"
           NO_HEAP_ARG=""; echo "$HELP_OUT" | grep -q -- "--no-heap-check" && NO_HEAP_ARG="--no-heap-check"
           KEEP_EXT_ARG=""; echo "$HELP_OUT" | grep -q -- "--keep-extracted" && KEEP_EXT_ARG="--keep-extracted"
-          ENV_FILE_ARG=""; echo "$HELP_OUT" | grep -q -- "--env-file" && ENV_FILE_ARG="--env-file $ROOT/miao_env.txt"
+          ENV_FILE_ARG=""; [ -s "$ROOT/miao_env.txt" ] && echo "$HELP_OUT" | grep -q -- "--env-file" && ENV_FILE_ARG="--env-file $ROOT/miao_env.txt"
 
           python3 /tmp/miao_live.py "build" "Biên dịch & Đóng gói IPA" 75 "" "" "Đang dịch shader & tạo file .ipa..." || true
           run_nx_build() {
